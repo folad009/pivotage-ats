@@ -1,0 +1,9 @@
+[
+  {
+    "AllowedOrigins": ["https://your-app.vercel.app", "https://your-custom-domain.com"],
+    "AllowedMethods": ["GET", "PUT", "HEAD"],
+    "AllowedHeaders": ["Content-Type", "Content-Length", "Content-MD5", "x-amz-content-sha256"],
+    "ExposeHeaders": ["ETag"],
+    "MaxAgeSeconds": 3600
+  }
+]

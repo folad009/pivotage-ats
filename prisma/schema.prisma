@@ -1,0 +1,425 @@
+// Prisma schema for the Privotage Consulting ATS.
+// See AGENTS.md §5 (Domain Model) and §9 (Prisma conventions).
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum Role {
+  ADMIN
+  RECRUITER
+  HIRING_MANAGER
+}
+
+enum ClientStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+enum JobStatus {
+  DRAFT
+  OPEN
+  ON_HOLD
+  CLOSED
+  FILLED
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  TEMPORARY
+  INTERNSHIP
+}
+
+enum StageType {
+  SOURCED
+  SCREENING
+  INTERVIEW
+  OFFER
+  HIRED
+  REJECTED
+}
+
+enum ApplicationStatus {
+  ACTIVE
+  HIRED
+  REJECTED
+  WITHDRAWN
+  ARCHIVED
+}
+
+enum InterviewType {
+  PHONE
+  TECHNICAL
+  ONSITE
+  FINAL
+}
+
+enum InterviewStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum Recommendation {
+  STRONG_YES
+  YES
+  NO
+  STRONG_NO
+}
+
+enum NoteType {
+  NOTE
+  SYSTEM
+}
+
+enum ComplianceEventType {
+  GDPR_ERASURE
+  RETENTION_PURGE
+}
+
+// ---------------------------------------------------------------------------
+// Auth & users
+// ---------------------------------------------------------------------------
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  passwordHash  String?
+  role          Role      @default(RECRUITER)
+  isActive      Boolean   @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  accounts          Account[]
+  sessions          Session[]
+  ownedJobs         Job[]          @relation("JobOwner")
+  ownedApplications Application[]  @relation("ApplicationOwner")
+  stageMoves        StageHistory[] @relation("StageMovedBy")
+  scorecards        Scorecard[]
+  notes             Note[]
+  interviewPanels   Interview[]    @relation("InterviewPanel")
+  complianceEvents  ComplianceAuditLog[] @relation("CompliancePerformedBy")
+  agencySettingsUpdates AgencySettings[] @relation("AgencySettingsUpdatedBy")
+
+  @@index([role])
+  @@index([isActive])
+}
+
+// Auth.js (NextAuth) adapter models.
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ---------------------------------------------------------------------------
+// Recruitment domain
+// ---------------------------------------------------------------------------
+
+model Client {
+  id           String       @id @default(cuid())
+  name         String
+  contactEmail String?
+  industry     String?
+  status       ClientStatus @default(ACTIVE)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  jobs Job[]
+
+  @@index([status])
+  @@index([name])
+}
+
+model Job {
+  id             String         @id @default(cuid())
+  title          String
+  clientId       String
+  ownerId        String
+  department     String?
+  location       String?
+  employmentType EmploymentType @default(FULL_TIME)
+  status         JobStatus      @default(DRAFT)
+  openings       Int            @default(1)
+  description    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  client       Client          @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  owner        User            @relation("JobOwner", fields: [ownerId], references: [id])
+  stages       PipelineStage[]
+  applications Application[]
+
+  @@index([clientId])
+  @@index([ownerId])
+  @@index([status])
+}
+
+model PipelineStage {
+  id    String    @id @default(cuid())
+  jobId String
+  name  String
+  order Int
+  type  StageType
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  job                 Job            @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  currentApplications Application[]  @relation("ApplicationCurrentStage")
+  movedFrom           StageHistory[] @relation("StageHistoryFrom")
+  movedTo             StageHistory[] @relation("StageHistoryTo")
+
+  @@unique([jobId, order])
+  @@index([jobId])
+  @@index([type])
+}
+
+model Candidate {
+  id          String  @id @default(cuid())
+  firstName   String
+  lastName    String
+  email       String  @unique
+  phone       String?
+  location    String?
+  source      String?
+  linkedinUrl String?
+  anonymizedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  applications Application[]
+  attachments  Attachment[]
+  tags         Tag[]         @relation("CandidateTags")
+
+  @@index([lastName])
+  @@index([source])
+  @@index([anonymizedAt])
+}
+
+model Application {
+  id             String            @id @default(cuid())
+  candidateId    String
+  jobId          String
+  currentStageId String
+  ownerId        String
+  status         ApplicationStatus @default(ACTIVE)
+  rating         Int?
+  appliedAt      DateTime          @default(now())
+  archivedAt     DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  candidate    Candidate      @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  job          Job            @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  currentStage PipelineStage  @relation("ApplicationCurrentStage", fields: [currentStageId], references: [id])
+  owner        User           @relation("ApplicationOwner", fields: [ownerId], references: [id])
+  stageHistory StageHistory[]
+  interviews   Interview[]
+  notes        Note[]
+  attachments  Attachment[]
+
+  @@unique([candidateId, jobId])
+  @@index([candidateId])
+  @@index([jobId])
+  @@index([currentStageId])
+  @@index([ownerId])
+  @@index([status])
+  @@index([appliedAt])
+}
+
+model StageHistory {
+  id            String   @id @default(cuid())
+  applicationId String
+  fromStageId   String?
+  toStageId     String
+  movedById     String
+  reason        String?
+  movedAt       DateTime @default(now())
+
+  application Application    @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  fromStage   PipelineStage? @relation("StageHistoryFrom", fields: [fromStageId], references: [id])
+  toStage     PipelineStage  @relation("StageHistoryTo", fields: [toStageId], references: [id])
+  movedBy     User           @relation("StageMovedBy", fields: [movedById], references: [id])
+
+  @@index([applicationId])
+  @@index([fromStageId])
+  @@index([toStageId])
+  @@index([movedById])
+  @@index([movedAt])
+}
+
+model Interview {
+  id            String          @id @default(cuid())
+  applicationId String
+  type          InterviewType
+  status        InterviewStatus @default(SCHEDULED)
+  scheduledAt   DateTime
+  durationMins  Int             @default(60)
+  location      String?
+  meetingUrl    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  panel       User[]      @relation("InterviewPanel")
+  scorecards  Scorecard[]
+
+  @@index([applicationId])
+  @@index([status])
+  @@index([scheduledAt])
+}
+
+model Scorecard {
+  id             String         @id @default(cuid())
+  interviewId    String
+  authorId       String
+  overall        Int
+  recommendation Recommendation
+  criteria       Json?
+  comments       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  interview Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+  author    User      @relation(fields: [authorId], references: [id])
+
+  @@unique([interviewId, authorId])
+  @@index([interviewId])
+  @@index([authorId])
+}
+
+model Note {
+  id            String   @id @default(cuid())
+  applicationId String
+  authorId      String
+  body          String
+  type          NoteType @default(NOTE)
+  mentions      String[] @default([])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  author      User        @relation(fields: [authorId], references: [id])
+
+  @@index([applicationId])
+  @@index([authorId])
+  @@index([type])
+}
+
+model Attachment {
+  id            String  @id @default(cuid())
+  applicationId String?
+  candidateId   String?
+  fileName      String
+  storageKey    String
+  mimeType      String
+  size          Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  application Application? @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  candidate   Candidate?   @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId])
+  @@index([candidateId])
+}
+
+model Tag {
+  id    String  @id @default(cuid())
+  name  String  @unique
+  color String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  candidates Candidate[] @relation("CandidateTags")
+}
+
+model AgencySettings {
+  id            String   @id @default("default")
+  retentionDays Int      @default(365)
+  updatedAt     DateTime @updatedAt
+  updatedById   String?
+
+  updatedBy User? @relation("AgencySettingsUpdatedBy", fields: [updatedById], references: [id])
+
+  @@index([updatedById])
+}
+
+model ComplianceAuditLog {
+  id            String              @id @default(cuid())
+  eventType     ComplianceEventType
+  subjectType   String
+  subjectId     String
+  performedById String
+  performedAt   DateTime            @default(now())
+  metadata      Json?
+
+  performedBy User @relation("CompliancePerformedBy", fields: [performedById], references: [id])
+
+  @@index([eventType])
+  @@index([performedAt])
+  @@index([subjectId])
+  @@index([performedById])
+}
