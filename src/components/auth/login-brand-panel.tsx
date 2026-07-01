@@ -4,6 +4,7 @@ import { Briefcase, LineChart, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 const SLIDES = [
   {
@@ -57,20 +58,12 @@ export function LoginBrandPanel() {
       className="bg-primary text-primary-foreground relative hidden min-h-screen overflow-hidden lg:flex lg:flex-col"
     >
       <div className="relative z-10 flex items-center gap-3 p-8">
-        <span
-          aria-hidden
-          className="bg-primary-foreground text-primary flex size-10 items-center justify-center rounded-lg text-lg font-bold"
-        >
-          P
-        </span>
         <div>
-          <p className="text-lg font-semibold tracking-tight">Privotage ATS</p>
-          <p className="text-primary-foreground/80 text-sm">Consulting recruitment platform</p>
+          <Image src="/images/pivotage-logo.png" alt="Privotage ATS" width={200} height={200} className="w-auto h-auto object-contain" />
         </div>
       </div>
-
       <div className="relative flex flex-1 flex-col justify-end p-8 pt-0">
-        <div className="relative min-h-[22rem] overflow-hidden rounded-2xl border border-white/10 shadow-2xl">
+        <div className="relative min-h-88 overflow-hidden rounded-2xl border border-white/10 shadow-2xl">
           {SLIDES.map((slide, index) => {
             const Icon = slide.icon;
             const isActive = index === activeIndex;
