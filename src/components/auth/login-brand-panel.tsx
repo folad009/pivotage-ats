@@ -130,16 +130,7 @@ export function LoginBrandPanel() {
 export function LoginMobileBrand() {
   return (
     <div className="mb-8 flex items-center gap-3 lg:hidden">
-      <span
-        aria-hidden
-        className="bg-primary text-primary-foreground flex size-9 items-center justify-center rounded-md text-sm font-bold"
-      >
-        P
-      </span>
-      <div>
-        <p className="text-sm font-semibold tracking-tight">Privotage ATS</p>
-        <p className="text-muted-foreground text-xs">Sign in to continue</p>
-      </div>
+      <Image src="/images/pivotage-logo.png" alt="Privotage ATS" width={200} height={200} className="w-auto h-auto object-contain" />
     </div>
   );
 }
