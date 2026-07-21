@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { DataRetentionSettings } from "@/components/compliance/data-retention-settings";
+import { StaffManagement } from "@/components/settings/staff-management";
 import { requireRole } from "@/lib/rbac";
 import { db } from "@/server/db";
 import { getAgencySettings } from "@/server/services/compliance.service";
@@ -19,9 +20,12 @@ export default async function SettingsPage() {
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
         <p className="text-muted-foreground text-sm">
-          Agency configuration, data retention, and compliance controls.
+          Agency configuration, staff access, data retention, and compliance
+          controls.
         </p>
       </div>
+
+      <StaffManagement />
 
       <DataRetentionSettings initialRetentionDays={settings.retentionDays} />
     </div>

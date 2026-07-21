@@ -6,6 +6,7 @@ import type {
   InterviewType,
   JobStatus,
   Recommendation,
+  Role,
   StageType,
 } from "@prisma/client";
 
@@ -83,4 +84,16 @@ export const RECOMMENDATION_LABELS: Record<Recommendation, string> = {
   YES: "Yes",
   NO: "No",
   STRONG_NO: "Strong no",
+};
+
+export const ROLE_LABELS: Record<Role, string> = {
+  ADMIN: "Administrator",
+  RECRUITER: "Recruiter",
+  HIRING_MANAGER: "Hiring manager",
+};
+
+export const ROLE_VARIANTS: Record<Role, BadgeVariant> = {
+  ADMIN: "default",
+  RECRUITER: "secondary",
+  HIRING_MANAGER: "outline",
 };
