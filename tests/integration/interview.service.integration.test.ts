@@ -1,5 +1,4 @@
 // @vitest-environment node
-import { PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { ForbiddenError } from "@/lib/errors";
@@ -9,8 +8,9 @@ import {
   assertPanelMember,
   upsertScorecard,
 } from "@/server/services/scorecard.service";
+import { getTestDb } from "../helpers/test-db";
 
-const db = new PrismaClient();
+const db = getTestDb();
 const hasDatabase = Boolean(process.env.DATABASE_URL);
 
 describe.skipIf(!hasDatabase)("interview scheduling integration", () => {

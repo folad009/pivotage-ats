@@ -3,7 +3,7 @@ import {
   type Prisma,
   type PrismaClient,
   type StageType,
-} from "@prisma/client";
+} from "@/lib/prisma";
 
 import {
   ConflictError,
@@ -516,4 +516,95 @@ export async function getApplicationMoveScope(
   }
   const assignedUserIds = await getJobAssignedUserIds(db, application.jobId);
   return { assignedUserIds };
+}
+
+/** Self-service apply from the public careers portal. */
+export async function applyToJobAsCandidate(
+  db: PrismaClient,
+  candidateId: string,
+  jobId: string,
+) {
+  const job = await db.job.findFirst({
+    where: { id: jobId, status: "OPEN" },
+    select: { id: true, ownerId: true, title: true },
+  });
+  if (!job) {
+    throw new NotFoundError("Job");
+  }
+
+  const existing = await db.application.findUnique({
+    where: {
+      candidateId_jobId: { candidateId, jobId },
+    },
+    select: { id: true },
+  });
+  if (existing) {
+    throw new ConflictError(
+      "You have already applied for this role.",
+      existing.id,
+    );
+  }
+
+  const firstStage = await db.pipelineStage.findFirst({
+    where: { jobId },
+    orderBy: { order: "asc" },
+    select: { id: true, name: true },
+  });
+  if (!firstStage) {
+    throw new ValidationError("This job is not accepting applications yet.");
+  }
+
+  return db.$transaction(async (tx) => {
+    const application = await tx.application.create({
+      data: {
+        candidateId,
+        jobId,
+        currentStageId: firstStage.id,
+        ownerId: job.ownerId,
+        status: ApplicationStatus.ACTIVE,
+      },
+    });
+
+    await tx.stageHistory.create({
+      data: {
+        applicationId: application.id,
+        fromStageId: null,
+        toStageId: firstStage.id,
+        movedById: job.ownerId,
+      },
+    });
+
+    await tx.note.create({
+      data: {
+        applicationId: application.id,
+        authorId: job.ownerId,
+        body: `Candidate applied online for ${job.title} (${firstStage.name}).`,
+        type: "SYSTEM",
+      },
+    });
+
+    return application;
+  });
+}
+
+export async function listCandidateApplications(db: Db, candidateId: string) {
+  return db.application.findMany({
+    where: { candidateId },
+    orderBy: { appliedAt: "desc" },
+    select: {
+      id: true,
+      status: true,
+      appliedAt: true,
+      job: {
+        select: {
+          id: true,
+          title: true,
+          status: true,
+          workMode: true,
+          client: { select: { name: true } },
+        },
+      },
+      currentStage: { select: { name: true } },
+    },
+  });
 }

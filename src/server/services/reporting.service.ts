@@ -4,7 +4,7 @@ import {
   type Prisma,
   type PrismaClient,
   type StageType,
-} from "@prisma/client";
+} from "@/lib/prisma";
 
 import {
   computeFunnelCounts,

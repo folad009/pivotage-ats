@@ -1,6 +1,6 @@
 "use client";
 
-import type { Role } from "@prisma/client";
+import type { Role } from "@/lib/prisma-browser";
 import { CalendarPlus } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";

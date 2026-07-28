@@ -1,4 +1,4 @@
-import { ApplicationStatus, type Prisma, type StageType } from "@prisma/client";
+import { ApplicationStatus, type Prisma, type StageType } from "@/lib/prisma";
 
 /** Where clause excluding archived applications from active views. */
 export const EXCLUDE_ARCHIVED_FILTER: Prisma.ApplicationWhereInput = {

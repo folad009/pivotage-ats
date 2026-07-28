@@ -1,4 +1,4 @@
-import type { Role } from "@prisma/client";
+import type { Role } from "@/lib/prisma-browser";
 
 import { ForbiddenError, UnauthorizedError } from "@/lib/errors";
 import {
@@ -15,6 +15,9 @@ export async function getCurrentUser(): Promise<
   const { auth } = await import("@/server/auth");
   const session = await auth();
   if (!session?.user) {
+    throw new UnauthorizedError();
+  }
+  if (session.user.accountType !== "staff" || !session.user.role) {
     throw new UnauthorizedError();
   }
   return {
@@ -54,4 +57,27 @@ export async function requireCandidateViewAccess(): Promise<
     throw new ForbiddenError();
   }
   return user;
+}
+
+export async function getCurrentCandidate(): Promise<{
+  id: string;
+  email: string;
+  name: string;
+}> {
+  const { auth } = await import("@/server/auth");
+  const session = await auth();
+  if (!session?.user || session.user.accountType !== "candidate") {
+    throw new UnauthorizedError();
+  }
+  return {
+    id: session.user.id,
+    email: session.user.email ?? "",
+    name: session.user.name ?? "Candidate",
+  };
+}
+
+export async function requireStaffUser(): Promise<
+  AccessUser & { email: string; name: string | null }
+> {
+  return getCurrentUser();
 }

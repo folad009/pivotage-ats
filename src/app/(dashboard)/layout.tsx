@@ -13,11 +13,14 @@ export default async function DashboardLayout({
   if (!session?.user) {
     redirect("/login");
   }
+  if (session.user.accountType === "candidate") {
+    redirect("/careers");
+  }
 
   const user = {
     name: session.user.name ?? null,
     email: session.user.email ?? "",
-    role: session.user.role,
+    role: session.user.role!,
   };
 
   return (

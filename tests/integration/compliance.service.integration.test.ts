@@ -2,8 +2,7 @@
 import {
   ApplicationStatus,
   ComplianceEventType,
-  PrismaClient,
-} from "@prisma/client";
+} from "@/lib/prisma";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/server/services/storage.service", () => ({
@@ -19,8 +18,9 @@ import {
   runRetentionPurge,
 } from "@/server/services/compliance.service";
 import { listApplications } from "@/server/services/application.service";
+import { getTestDb } from "../helpers/test-db";
 
-const db = new PrismaClient();
+const db = getTestDb();
 const hasDatabase = Boolean(process.env.DATABASE_URL);
 
 describe.skipIf(!hasDatabase)("compliance integration", () => {

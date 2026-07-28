@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 
 import { InterviewsView } from "@/components/interviews/interviews-view";
 import { mayBrowseCandidatePII } from "@/lib/rbac";
+import { getStaffUser } from "@/lib/staff-session";
 import { auth } from "@/server/auth";
 
 export default async function InterviewsPage() {
@@ -9,7 +10,7 @@ export default async function InterviewsPage() {
   if (!session?.user) {
     redirect("/login");
   }
-  if (!mayBrowseCandidatePII(session.user)) {
+  if (!mayBrowseCandidatePII(getStaffUser(session))) {
     redirect("/dashboard");
   }
 

@@ -1,8 +1,8 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { EmploymentType, JobStatus } from "@prisma/client";
-import { useState } from "react";
+import { EmploymentType, JobStatus, WorkMode } from "@/lib/prisma-browser";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -33,24 +33,35 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { EMPLOYMENT_TYPE_LABELS, JOB_STATUS_LABELS } from "@/lib/labels";
-import { createJobSchema } from "@/lib/validations/job";
+import {
+  IN_HOUSE_CLIENT_LABEL,
+  IN_HOUSE_CLIENT_VALUE,
+} from "@/lib/constants";
+import {
+  EMPLOYMENT_TYPE_LABELS,
+  JOB_STATUS_LABELS,
+  WORK_MODE_LABELS,
+} from "@/lib/labels";
+import { createJobSchema, updateJobSchema, jobFormSchema } from "@/lib/validations/job";
 import { createJobAction, updateJobAction } from "@/server/actions/job";
 import { api } from "@/trpc/react";
 
-type FormIn = z.input<typeof createJobSchema>;
-type FormOut = z.output<typeof createJobSchema>;
+type FormIn = z.input<typeof jobFormSchema>;
+type FormOut = z.input<typeof jobFormSchema>;
 
 export interface JobFormValues {
   id: string;
   title: string;
-  clientId: string;
+  clientId: string | null;
   department: string | null;
   location: string | null;
   employmentType: EmploymentType;
+  workMode: WorkMode;
   status: JobStatus;
   openings: number;
+  jobRole: string | null;
   description: string | null;
+  requirements: string | null;
 }
 
 interface JobFormDialogProps {
@@ -75,25 +86,48 @@ export function JobFormDialog({
   );
   const clients = clientsQuery.data?.items ?? [];
 
-  const form = useForm<FormIn, unknown, FormOut>({
-    resolver: zodResolver(createJobSchema),
+  const form = useForm<FormIn>({
+    resolver: zodResolver(jobFormSchema),
     defaultValues: {
       title: initial?.title ?? "",
-      clientId: initial?.clientId ?? "",
+      clientId: initial ? (initial.clientId ?? IN_HOUSE_CLIENT_VALUE) : IN_HOUSE_CLIENT_VALUE,
       department: initial?.department ?? "",
       location: initial?.location ?? "",
       employmentType: initial?.employmentType ?? EmploymentType.FULL_TIME,
+      workMode: initial?.workMode ?? WorkMode.REMOTE,
       status: initial?.status ?? JobStatus.DRAFT,
       openings: initial?.openings ?? 1,
+      jobRole: initial?.jobRole ?? "",
       description: initial?.description ?? "",
+      requirements: initial?.requirements ?? "",
     },
   });
 
+  useEffect(() => {
+    if (!open) return;
+    form.reset({
+      title: initial?.title ?? "",
+      clientId: initial ? (initial.clientId ?? IN_HOUSE_CLIENT_VALUE) : IN_HOUSE_CLIENT_VALUE,
+      department: initial?.department ?? "",
+      location: initial?.location ?? "",
+      employmentType: initial?.employmentType ?? EmploymentType.FULL_TIME,
+      workMode: initial?.workMode ?? WorkMode.REMOTE,
+      status: initial?.status ?? JobStatus.DRAFT,
+      openings: initial?.openings ?? 1,
+      jobRole: initial?.jobRole ?? "",
+      description: initial?.description ?? "",
+      requirements: initial?.requirements ?? "",
+    });
+  }, [open, initial, form]);
+
   async function onSubmit(values: FormOut) {
     setIsPending(true);
+    const parsed = isEdit
+      ? updateJobSchema.parse({ id: initial!.id, ...values })
+      : createJobSchema.parse(values);
     const result = isEdit
-      ? await updateJobAction({ id: initial!.id, ...values })
-      : await createJobAction(values);
+      ? await updateJobAction(parsed)
+      : await createJobAction(parsed);
     setIsPending(false);
 
     if (!result.ok) {
@@ -109,7 +143,7 @@ export function JobFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{isEdit ? "Edit job" : "New job"}</DialogTitle>
           <DialogDescription>
@@ -125,9 +159,26 @@ export function JobFormDialog({
               name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Title</FormLabel>
+                  <FormLabel>Job title</FormLabel>
                   <FormControl>
                     <Input placeholder="Senior Frontend Engineer" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="jobRole"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Job role</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Frontend Engineer"
+                      {...field}
+                      value={field.value ?? ""}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -139,7 +190,10 @@ export function JobFormDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Client</FormLabel>
-                  <Select value={field.value} onValueChange={field.onChange}>
+                  <Select
+                    value={field.value ?? IN_HOUSE_CLIENT_VALUE}
+                    onValueChange={field.onChange}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue
@@ -152,6 +206,9 @@ export function JobFormDialog({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
+                      <SelectItem value={IN_HOUSE_CLIENT_VALUE}>
+                        {IN_HOUSE_CLIENT_LABEL}
+                      </SelectItem>
                       {clients.map((client) => (
                         <SelectItem key={client.id} value={client.id}>
                           {client.name}
@@ -189,7 +246,7 @@ export function JobFormDialog({
                     <FormLabel>Location</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Remote"
+                        placeholder="London, UK"
                         {...field}
                         value={field.value ?? ""}
                       />
@@ -200,6 +257,30 @@ export function JobFormDialog({
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
+              <FormField
+                control={form.control}
+                name="workMode"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Work mode</FormLabel>
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {Object.values(WorkMode).map((value) => (
+                          <SelectItem key={value} value={value}>
+                            {WORK_MODE_LABELS[value]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <FormField
                 control={form.control}
                 name="employmentType"
@@ -224,25 +305,25 @@ export function JobFormDialog({
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="openings"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Openings</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min={1}
-                        {...field}
-                        value={(field.value as number | string | undefined) ?? 1}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
             </div>
+            <FormField
+              control={form.control}
+              name="openings"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Openings</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min={1}
+                      {...field}
+                      value={(field.value as number | string | undefined) ?? 1}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="status"
@@ -276,7 +357,25 @@ export function JobFormDialog({
                   <FormControl>
                     <Textarea
                       rows={4}
-                      placeholder="Role summary, responsibilities…"
+                      placeholder="Role summary and responsibilities…"
+                      {...field}
+                      value={field.value ?? ""}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="requirements"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Requirements</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      rows={4}
+                      placeholder="Skills, experience, and qualifications…"
                       {...field}
                       value={field.value ?? ""}
                     />

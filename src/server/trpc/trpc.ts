@@ -4,6 +4,7 @@ import { ZodError } from "zod";
 
 import { auth } from "@/server/auth";
 import { db } from "@/server/db";
+import type { AccessUser } from "@/lib/rbac-core";
 
 /**
  * tRPC request context — available to every procedure. Holds the Prisma client
@@ -19,6 +20,18 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
 };
 
 export type TRPCContext = Awaited<ReturnType<typeof createTRPCContext>>;
+
+type StaffContext = {
+  db: TRPCContext["db"];
+  headers: Headers;
+  session: NonNullable<TRPCContext["session"]> & {
+    user: AccessUser & {
+      email?: string | null;
+      name?: string | null;
+      accountType: "staff";
+    };
+  };
+};
 
 const t = initTRPC.context<TRPCContext>().create({
   transformer: superjson,
@@ -40,15 +53,26 @@ export const createTRPCRouter = t.router;
 /** Open procedure — no authentication required. */
 export const publicProcedure = t.procedure;
 
-/** Authenticated procedure — narrows `ctx.session` to a non-null user. */
+/** Authenticated staff procedure — narrows `ctx.session.user` to staff + role. */
 export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
-  if (!ctx.session?.user) {
+  const user = ctx.session?.user;
+  if (!user || user.accountType !== "staff" || !user.role) {
     throw new TRPCError({ code: "UNAUTHORIZED" });
   }
   return next({
     ctx: {
-      ...ctx,
-      session: { ...ctx.session, user: ctx.session.user },
-    },
+      db: ctx.db,
+      headers: ctx.headers,
+      session: {
+        ...ctx.session!,
+        user: {
+          id: user.id,
+          role: user.role,
+          email: user.email,
+          name: user.name,
+          accountType: "staff" as const,
+        },
+      },
+    } satisfies StaffContext,
   });
 });

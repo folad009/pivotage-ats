@@ -12,7 +12,9 @@ import {
 } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { JOB_STATUS_LABELS, JOB_STATUS_VARIANTS } from "@/lib/labels";
+import { IN_HOUSE_CLIENT_LABEL } from "@/lib/constants";
 import { mayBrowseCandidatePII } from "@/lib/rbac";
+import { getStaffUser } from "@/lib/staff-session";
 import { auth } from "@/server/auth";
 import { api } from "@/trpc/server";
 
@@ -21,7 +23,7 @@ export default async function ApplicationsPage() {
   if (!session?.user) {
     redirect("/login");
   }
-  if (!mayBrowseCandidatePII(session.user)) {
+  if (!mayBrowseCandidatePII(getStaffUser(session))) {
     redirect("/dashboard");
   }
 
@@ -61,7 +63,7 @@ export default async function ApplicationsPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <p className="text-muted-foreground text-sm">
-                  {job.client.name} · {job._count.applications} application
+                  {job.client?.name ?? IN_HOUSE_CLIENT_LABEL} · {job._count.applications} application
                   {job._count.applications === 1 ? "" : "s"}
                 </p>
                 <Button asChild size="sm">

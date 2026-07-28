@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 
 import { ReportsDashboard } from "@/components/reports/reports-dashboard";
 import { mayViewReports } from "@/lib/rbac";
+import { getStaffUser } from "@/lib/staff-session";
 import { auth } from "@/server/auth";
 
 export default async function ReportsPage() {
@@ -9,7 +10,7 @@ export default async function ReportsPage() {
   if (!session?.user) {
     redirect("/login");
   }
-  if (!mayViewReports(session.user)) {
+  if (!mayViewReports(getStaffUser(session))) {
     redirect("/dashboard");
   }
 

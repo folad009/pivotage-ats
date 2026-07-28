@@ -1,6 +1,6 @@
 "use client";
 
-import { JobStatus } from "@prisma/client";
+import { JobStatus } from "@/lib/prisma-browser";
 import {
   type ColumnDef,
   type SortingState,
@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/table";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { JOB_STATUS_LABELS, JOB_STATUS_VARIANTS } from "@/lib/labels";
+import { IN_HOUSE_CLIENT_LABEL, IN_HOUSE_CLIENT_VALUE } from "@/lib/constants";
 import { api } from "@/trpc/react";
 import type { RouterOutputs } from "@/trpc/types";
 
@@ -109,11 +110,11 @@ export function JobsView({
       },
       {
         id: "client",
-        accessorFn: (row) => row.client.name,
+        accessorFn: (row) => row.client?.name ?? IN_HOUSE_CLIENT_LABEL,
         header: "Client",
         cell: ({ row }) => (
           <span className="text-muted-foreground">
-            {row.original.client.name}
+            {row.original.client?.name ?? IN_HOUSE_CLIENT_LABEL}
           </span>
         ),
       },
@@ -193,6 +194,9 @@ export function JobsView({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value={ALL}>All clients</SelectItem>
+              <SelectItem value={IN_HOUSE_CLIENT_VALUE}>
+                {IN_HOUSE_CLIENT_LABEL}
+              </SelectItem>
               {(clientsQuery.data?.items ?? []).map((client) => (
                 <SelectItem key={client.id} value={client.id}>
                   {client.name}

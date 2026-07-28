@@ -1,4 +1,4 @@
-import type { Prisma, PrismaClient, Role } from "@prisma/client";
+import type { Prisma, PrismaClient, Role } from "@/lib/prisma";
 import argon2 from "argon2";
 
 import {

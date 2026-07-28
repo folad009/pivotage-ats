@@ -1,11 +1,13 @@
-import { Role, type Prisma, type PrismaClient, type StageType } from "@prisma/client";
+import { Role, type Prisma, type PrismaClient, type StageType } from "@/lib/prisma";
 
+import { IN_HOUSE_CLIENT_VALUE } from "@/lib/constants";
 import { NotFoundError, ValidationError } from "@/lib/errors";
 import type { AccessUser } from "@/lib/rbac";
 import type {
   CreateJobInput,
   JobListInput,
   PipelineStageInput,
+  PublicJobListInput,
   UpdateJobInput,
 } from "@/lib/validations/job";
 
@@ -59,7 +61,11 @@ export function buildJobListWhere(
   const filters: Prisma.JobWhereInput[] = [];
 
   if (input.status) filters.push({ status: input.status });
-  if (input.clientId) filters.push({ clientId: input.clientId });
+  if (input.clientId === IN_HOUSE_CLIENT_VALUE) {
+    filters.push({ clientId: null });
+  } else if (input.clientId) {
+    filters.push({ clientId: input.clientId });
+  }
   if (input.ownerId) filters.push({ ownerId: input.ownerId });
   if (input.search) {
     filters.push({
@@ -127,9 +133,12 @@ export async function createJob(db: Db, input: CreateJobInput & { ownerId: strin
       department: input.department ?? null,
       location: input.location ?? null,
       employmentType: input.employmentType,
+      workMode: input.workMode,
       status: input.status,
       openings: input.openings,
+      jobRole: input.jobRole ?? null,
       description: input.description ?? null,
+      requirements: input.requirements ?? null,
       stages: {
         create: DEFAULT_PIPELINE_STAGES.map((stage, index) => ({
           name: stage.name,
@@ -151,6 +160,11 @@ export async function updateJob(db: Db, input: UpdateJobInput) {
     data: {
       ...(rest.title !== undefined ? { title: rest.title } : {}),
       ...(rest.clientId !== undefined ? { clientId: rest.clientId } : {}),
+      ...(rest.workMode !== undefined ? { workMode: rest.workMode } : {}),
+      ...(rest.jobRole !== undefined ? { jobRole: rest.jobRole ?? null } : {}),
+      ...(rest.requirements !== undefined
+        ? { requirements: rest.requirements ?? null }
+        : {}),
       ...(ownerId !== undefined ? { ownerId } : {}),
       ...(rest.department !== undefined
         ? { department: rest.department ?? null }
@@ -322,4 +336,64 @@ async function ensureJobExists(db: Db, id: string) {
   if (!existing) {
     throw new NotFoundError("Job");
   }
+}
+
+const publicJobSelect = {
+  id: true,
+  title: true,
+  jobRole: true,
+  department: true,
+  location: true,
+  employmentType: true,
+  workMode: true,
+  description: true,
+  requirements: true,
+  openings: true,
+  createdAt: true,
+  client: { select: { id: true, name: true } },
+} satisfies Prisma.JobSelect;
+
+/** Public careers board — only open requisitions, no auth required. */
+export async function listPublicJobs(db: Db, input: PublicJobListInput) {
+  const limit = input.limit ?? JOB_PAGE_SIZE;
+  const where: Prisma.JobWhereInput = {
+    status: "OPEN",
+  };
+
+  if (input.workMode) {
+    where.workMode = input.workMode;
+  }
+  if (input.search) {
+    where.OR = [
+      { title: { contains: input.search, mode: "insensitive" } },
+      { jobRole: { contains: input.search, mode: "insensitive" } },
+      { department: { contains: input.search, mode: "insensitive" } },
+    ];
+  }
+
+  const rows = await db.job.findMany({
+    where,
+    select: publicJobSelect,
+    take: limit + 1,
+    ...(input.cursor ? { cursor: { id: input.cursor }, skip: 1 } : {}),
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+  });
+
+  let nextCursor: string | undefined;
+  if (rows.length > limit) {
+    nextCursor = rows.pop()!.id;
+  }
+
+  return { items: rows, nextCursor };
+}
+
+export async function getPublicJob(db: Db, id: string) {
+  const job = await db.job.findFirst({
+    where: { id, status: "OPEN" },
+    select: publicJobSelect,
+  });
+  if (!job) {
+    throw new NotFoundError("Job");
+  }
+  return job;
 }

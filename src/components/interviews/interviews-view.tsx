@@ -18,6 +18,7 @@ import {
   INTERVIEW_TYPE_LABELS,
   RECOMMENDATION_LABELS,
 } from "@/lib/labels";
+import { IN_HOUSE_CLIENT_LABEL } from "@/lib/constants";
 import { api } from "@/trpc/react";
 
 export function InterviewsView() {
@@ -96,7 +97,7 @@ export function InterviewsView() {
                           >
                             {job.title}
                           </Link>{" "}
-                          · {job.client.name}
+                          · {job.client?.name ?? IN_HOUSE_CLIENT_LABEL}
                         </p>
                       </div>
                       <Badge variant="outline">

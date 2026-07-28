@@ -1,4 +1,4 @@
-import { Recommendation } from "@prisma/client";
+import { Recommendation } from "@/lib/prisma";
 import { describe, expect, it } from "vitest";
 
 import { summarizeScorecards } from "@/lib/interview-summary";

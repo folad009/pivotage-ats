@@ -1,4 +1,4 @@
-import type { Recommendation } from "@prisma/client";
+import type { Recommendation } from "@/lib/prisma-browser";
 
 export interface ScorecardSummary {
   total: number;

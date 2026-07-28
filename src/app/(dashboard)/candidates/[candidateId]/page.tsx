@@ -21,6 +21,8 @@ import {
   STAGE_TYPE_LABELS,
 } from "@/lib/labels";
 import { can, mayBrowseCandidatePII } from "@/lib/rbac";
+import { getStaffUser } from "@/lib/staff-session";
+import { IN_HOUSE_CLIENT_LABEL } from "@/lib/constants";
 import { auth } from "@/server/auth";
 import { db } from "@/server/db";
 import { getCandidate } from "@/server/services/candidate.service";
@@ -34,11 +36,11 @@ export default async function CandidateDetailPage({
   if (!session?.user) {
     redirect("/login");
   }
-  if (!mayBrowseCandidatePII(session.user)) {
+  if (!mayBrowseCandidatePII(getStaffUser(session))) {
     redirect("/dashboard");
   }
 
-  const user = session.user;
+  const user = getStaffUser(session);
   const { candidateId } = await params;
 
   const candidate = await getCandidate(db, user, candidateId).catch(
@@ -168,7 +170,7 @@ export default async function CandidateDetailPage({
                       {application.job.title}
                     </Link>
                     <p className="text-muted-foreground text-sm">
-                      {application.job.client.name} ·{" "}
+                      {application.job.client?.name ?? IN_HOUSE_CLIENT_LABEL} ·{" "}
                       {STAGE_TYPE_LABELS[application.currentStage.type]} (
                       {application.currentStage.name})
                     </p>

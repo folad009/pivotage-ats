@@ -19,6 +19,9 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
+      "@/lib/prisma": fileURLToPath(
+        new URL("./src/lib/prisma.ts", import.meta.url),
+      ),
     },
   },
 });

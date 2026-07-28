@@ -20,6 +20,7 @@ import {
 } from "@/lib/labels";
 import { NotFoundError } from "@/lib/errors";
 import { can } from "@/lib/rbac";
+import { getStaffUser } from "@/lib/staff-session";
 import { auth } from "@/server/auth";
 import { db } from "@/server/db";
 import { getClient } from "@/server/services/client.service";
@@ -33,7 +34,7 @@ export default async function ClientDetailPage({
   if (!session?.user) {
     redirect("/login");
   }
-  if (!can(session.user, "client:manage")) {
+  if (!can(getStaffUser(session), "client:manage")) {
     redirect("/dashboard");
   }
 

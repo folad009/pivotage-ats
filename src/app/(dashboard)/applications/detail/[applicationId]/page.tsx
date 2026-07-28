@@ -1,4 +1,4 @@
-import type { Role } from "@prisma/client";
+import type { Role } from "@/lib/prisma-browser";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -21,6 +21,8 @@ import {
   STAGE_TYPE_LABELS,
 } from "@/lib/labels";
 import { can, mayBrowseCandidatePII } from "@/lib/rbac";
+import { getStaffUser } from "@/lib/staff-session";
+import { IN_HOUSE_CLIENT_LABEL } from "@/lib/constants";
 import { auth } from "@/server/auth";
 import { db } from "@/server/db";
 import {
@@ -38,15 +40,16 @@ export default async function ApplicationDetailPage({
   if (!session?.user) {
     redirect("/login");
   }
-  if (!mayBrowseCandidatePII(session.user)) {
+  if (!mayBrowseCandidatePII(getStaffUser(session))) {
     redirect("/dashboard");
   }
 
+  const user = getStaffUser(session);
   const { applicationId } = await params;
 
   const application = await getApplication(
     db,
-    session.user,
+    user,
     applicationId,
   ).catch((error) => {
     if (error instanceof NotFoundError) notFound();
@@ -57,9 +60,9 @@ export default async function ApplicationDetailPage({
   const archiveScope = await getApplicationArchiveScope(db, applicationId);
   const canSchedule =
     application.status !== "ARCHIVED" &&
-    can(session.user, "interview:schedule", scheduleScope);
-  const canArchive = can(session.user, "application:archive", archiveScope);
-  const canRestore = can(session.user, "application:restore");
+    can(user, "interview:schedule", scheduleScope);
+  const canArchive = can(user, "application:archive", archiveScope);
+  const canRestore = can(user, "application:restore");
   const isArchived = application.status === "ARCHIVED";
   const candidateName = `${application.candidate.firstName} ${application.candidate.lastName}`;
 
@@ -88,7 +91,7 @@ export default async function ApplicationDetailPage({
           >
             {application.job.title}
           </Link>{" "}
-          · {application.job.client.name} · Current:{" "}
+          · {application.job.client?.name ?? IN_HOUSE_CLIENT_LABEL} · Current:{" "}
           {application.currentStage.name} (
           {STAGE_TYPE_LABELS[application.currentStage.type]})
           {isArchived && application.archivedAt
@@ -135,8 +138,8 @@ export default async function ApplicationDetailPage({
 
         <ApplicationActivityFeed
           applicationId={application.id}
-          userId={session.user.id}
-          userRole={session.user.role as Role}
+          userId={user.id}
+          userRole={user.role as Role}
           readOnly={isArchived}
         />
       </div>
@@ -145,8 +148,8 @@ export default async function ApplicationDetailPage({
         <ApplicationInterviewsSection
           applicationId={application.id}
           jobId={application.job.id}
-          userId={session.user.id}
-          userRole={session.user.role as Role}
+          userId={user.id}
+          userRole={user.role as Role}
           initialInterviews={application.interviews}
           canScheduleOnApplication={canSchedule}
           readOnly={isArchived}

@@ -1,6 +1,6 @@
 "use client";
 
-import { InterviewType } from "@prisma/client";
+import { InterviewType } from "@/lib/prisma-browser";
 import { CalendarPlus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";

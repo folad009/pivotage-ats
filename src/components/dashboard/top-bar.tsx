@@ -1,6 +1,6 @@
 "use client";
 
-import type { Role } from "@prisma/client";
+import type { Role } from "@/lib/prisma-browser";
 import { Menu, Search } from "lucide-react";
 import { useState } from "react";
 

@@ -1,6 +1,6 @@
 "use client";
 
-import type { Role } from "@prisma/client";
+import type { Role } from "@/lib/prisma-browser";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 

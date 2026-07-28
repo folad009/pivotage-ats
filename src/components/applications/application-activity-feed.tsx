@@ -36,7 +36,7 @@ type ActivityFeedPage = RouterOutputs["notes"]["activityFeed"];
 interface ApplicationActivityFeedProps {
   applicationId: string;
   userId: string;
-  userRole: import("@prisma/client").Role;
+  userRole: import("@/lib/prisma-browser").Role;
   readOnly?: boolean;
 }
 

@@ -1,7 +1,8 @@
-import { PrismaClient } from "../src/generated/prisma";
 import argon2 from "argon2";
 
-const prisma = new PrismaClient();
+import { createPrismaClient } from "../src/lib/create-prisma-client";
+
+const prisma = createPrismaClient();
 
 /** Default pipeline stages applied to every seeded job (AGENTS.md §6). */
 const DEFAULT_STAGES = [
@@ -110,8 +111,14 @@ async function main() {
       department: "Engineering",
       location: "Remote",
       employmentType: "FULL_TIME" as const,
+      workMode: "REMOTE" as const,
+      jobRole: "Frontend Engineer",
       status: "OPEN" as const,
       openings: 2,
+      description:
+        "Build accessible, performant web applications for client products.",
+      requirements:
+        "5+ years React/TypeScript experience. Strong CSS and testing skills.",
     },
     {
       title: "Product Designer",
@@ -119,17 +126,38 @@ async function main() {
       department: "Design",
       location: "London, UK",
       employmentType: "FULL_TIME" as const,
+      workMode: "HYBRID" as const,
+      jobRole: "Product Designer",
       status: "OPEN" as const,
       openings: 1,
+      description: "Own end-to-end design for recruitment workflows.",
+      requirements: "Portfolio demonstrating B2B SaaS product design.",
     },
     {
-      title: "Operations Manager",
+      title: "Operations Coordinator",
       clientId: acme.id,
       department: "Operations",
       location: "Manchester, UK",
       employmentType: "FULL_TIME" as const,
+      workMode: "ONSITE" as const,
+      jobRole: "Operations Coordinator",
+      status: "DRAFT" as const,
+      openings: 1,
+      description: "Support day-to-day hiring operations for Acme.",
+      requirements: "Organised communicator with ATS or HR admin experience.",
+    },
+    {
+      title: "Internal Talent Partner",
+      clientId: null,
+      department: "People",
+      location: "Remote",
+      employmentType: "FULL_TIME" as const,
+      workMode: "REMOTE" as const,
+      jobRole: "Talent Partner",
       status: "OPEN" as const,
       openings: 1,
+      description: "In-house recruiter supporting Privotage Consulting growth.",
+      requirements: "Agency or in-house recruiting background.",
     },
   ];
 
@@ -139,7 +167,6 @@ async function main() {
       data: {
         ...spec,
         ownerId: recruiter.id,
-        description: `${spec.title} role for our client.`,
         stages: {
           create: DEFAULT_STAGES.map((stage, index) => ({
             name: stage.name,
@@ -209,9 +236,9 @@ async function main() {
     if (!candidate || !job) continue;
 
     const progression = job.stages
-      .filter((s) => s.type !== "REJECTED")
-      .sort((a, b) => a.order - b.order);
-    const rejectedStage = job.stages.find((s) => s.type === "REJECTED");
+      .filter((s: SeededStage) => s.type !== "REJECTED")
+      .sort((a: SeededStage, b: SeededStage) => a.order - b.order);
+    const rejectedStage = job.stages.find((s: SeededStage) => s.type === "REJECTED");
 
     // Cycle through outcomes: positions 0..5 along progression, plus rejected.
     const outcome = i % 7;

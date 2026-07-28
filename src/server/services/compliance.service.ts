@@ -3,7 +3,7 @@ import {
   ComplianceEventType,
   type Prisma,
   type PrismaClient,
-} from "@prisma/client";
+} from "@/lib/prisma";
 import { randomUUID } from "node:crypto";
 
 import { NotFoundError, ValidationError } from "@/lib/errors";

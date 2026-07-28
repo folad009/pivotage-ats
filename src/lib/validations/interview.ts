@@ -1,4 +1,4 @@
-import { InterviewStatus, InterviewType } from "@prisma/client";
+import { InterviewStatus, InterviewType } from "@/lib/prisma-browser";
 import { z } from "zod";
 
 const optionalText = z

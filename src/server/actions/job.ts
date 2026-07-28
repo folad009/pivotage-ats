@@ -1,6 +1,6 @@
 "use server";
 
-import { Role } from "@prisma/client";
+import { Role } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
 import { ForbiddenError } from "@/lib/errors";

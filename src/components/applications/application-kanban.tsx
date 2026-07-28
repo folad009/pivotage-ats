@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/ui/error-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { moveStageAction } from "@/server/actions/application";
+import { IN_HOUSE_CLIENT_LABEL } from "@/lib/constants";
 import { api } from "@/trpc/react";
 import type { RouterOutputs } from "@/trpc/types";
 
@@ -198,7 +199,7 @@ export function ApplicationKanban({
         <div>
           <h2 className="text-lg font-semibold">{board.job.title}</h2>
           <p className="text-muted-foreground text-sm">
-            {board.job.client.name} · {board.job.openings} opening
+            {board.job.client?.name ?? IN_HOUSE_CLIENT_LABEL} · {board.job.openings} opening
             {board.job.openings === 1 ? "" : "s"}
           </p>
         </div>

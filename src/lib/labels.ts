@@ -8,7 +8,8 @@ import type {
   Recommendation,
   Role,
   StageType,
-} from "@prisma/client";
+  WorkMode,
+} from "@/lib/prisma-browser";
 
 type BadgeVariant = "default" | "secondary" | "destructive" | "outline";
 
@@ -46,6 +47,12 @@ export const EMPLOYMENT_TYPE_LABELS: Record<EmploymentType, string> = {
   CONTRACT: "Contract",
   TEMPORARY: "Temporary",
   INTERNSHIP: "Internship",
+};
+
+export const WORK_MODE_LABELS: Record<WorkMode, string> = {
+  REMOTE: "Remote",
+  HYBRID: "Hybrid",
+  ONSITE: "Onsite",
 };
 
 export const STAGE_TYPE_LABELS: Record<StageType, string> = {

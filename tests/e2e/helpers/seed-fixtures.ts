@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { createPrismaClient } from "@/lib/create-prisma-client";
 
 import { loadProjectEnv } from "../../helpers/load-env";
 
@@ -6,7 +6,7 @@ loadProjectEnv();
 
 /** Resolves a seeded application detail path visible to hiring managers. */
 export async function getSeededApplicationDetailPath(): Promise<string> {
-  const db = new PrismaClient();
+  const db = createPrismaClient();
   try {
     const interview = await db.interview.findFirst({
       where: {

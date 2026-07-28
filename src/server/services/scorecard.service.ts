@@ -1,4 +1,4 @@
-import { Prisma, type PrismaClient } from "@prisma/client";
+import { Prisma, type PrismaClient } from "@/lib/prisma";
 
 import { ForbiddenError, NotFoundError } from "@/lib/errors";
 import type { AccessUser } from "@/lib/rbac";

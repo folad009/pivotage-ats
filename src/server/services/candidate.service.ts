@@ -1,4 +1,5 @@
-import { Role, type Prisma, type PrismaClient } from "@prisma/client";
+import { Role, type Prisma, type PrismaClient } from "@/lib/prisma";
+import argon2 from "argon2";
 
 import { ConflictError, NotFoundError } from "@/lib/errors";
 import type { AccessUser } from "@/lib/rbac";
@@ -7,6 +8,7 @@ import type {
   CreateCandidateInput,
   UpdateCandidateInput,
 } from "@/lib/validations/candidate";
+import type { RegisterCandidateInput } from "@/lib/validations/candidate-register";
 import { jobScopeWhere } from "@/server/services/job.service";
 
 type Db = PrismaClient | Prisma.TransactionClient;
@@ -184,6 +186,28 @@ export async function createCandidate(db: Db, input: CreateCandidateInput) {
       ...(input.tagIds?.length
         ? { tags: { connect: input.tagIds.map((id) => ({ id })) } }
         : {}),
+    },
+  });
+}
+
+export async function registerCandidate(db: Db, input: RegisterCandidateInput) {
+  await assertUniqueEmail(db, input.email);
+  const passwordHash = await argon2.hash(input.password);
+
+  return db.candidate.create({
+    data: {
+      firstName: input.firstName,
+      lastName: input.lastName,
+      email: input.email,
+      phone: input.phone ?? null,
+      passwordHash,
+      source: "Self-registration",
+    },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
     },
   });
 }

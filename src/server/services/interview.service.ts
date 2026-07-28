@@ -2,7 +2,7 @@ import {
   InterviewStatus,
   type Prisma,
   type PrismaClient,
-} from "@prisma/client";
+} from "@/lib/prisma";
 
 import { NotFoundError, ValidationError } from "@/lib/errors";
 import { INTERVIEW_TYPE_LABELS } from "@/lib/labels";

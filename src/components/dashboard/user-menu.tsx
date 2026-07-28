@@ -1,6 +1,6 @@
 "use client";
 
-import type { Role } from "@prisma/client";
+import type { Role } from "@/lib/prisma-browser";
 import { ChevronsUpDown, LogOut } from "lucide-react";
 import { signOut } from "next-auth/react";
 

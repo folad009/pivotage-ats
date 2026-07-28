@@ -4,6 +4,7 @@ import { ClientsView } from "@/components/clients/clients-view";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ShieldAlert } from "lucide-react";
 import { can } from "@/lib/rbac";
+import { getStaffUser } from "@/lib/staff-session";
 import { auth } from "@/server/auth";
 
 export default async function ClientsPage() {
@@ -12,7 +13,7 @@ export default async function ClientsPage() {
     redirect("/login");
   }
 
-  if (!can(session.user, "client:manage")) {
+  if (!can(getStaffUser(session), "client:manage")) {
     return (
       <EmptyState
         icon={ShieldAlert}

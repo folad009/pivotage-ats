@@ -1,6 +1,6 @@
 "use client";
 
-import { ClientStatus } from "@prisma/client";
+import { ClientStatus } from "@/lib/prisma-browser";
 import { Building2, Pencil, Plus } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";

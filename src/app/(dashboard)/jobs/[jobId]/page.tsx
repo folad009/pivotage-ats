@@ -1,5 +1,5 @@
-import { Role } from "@prisma/client";
-import { ApplicationStatus } from "@prisma/client";
+import { Role } from "@/lib/prisma-browser";
+import { ApplicationStatus } from "@/lib/prisma-browser";
 import { ArrowLeft, Archive, Kanban } from "lucide-react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -20,8 +20,11 @@ import {
   EMPLOYMENT_TYPE_LABELS,
   JOB_STATUS_LABELS,
   JOB_STATUS_VARIANTS,
+  WORK_MODE_LABELS,
 } from "@/lib/labels";
+import { IN_HOUSE_CLIENT_LABEL } from "@/lib/constants";
 import { can, mayBrowseCandidatePII } from "@/lib/rbac";
+import { getStaffUser } from "@/lib/staff-session";
 import { auth } from "@/server/auth";
 import { db } from "@/server/db";
 import { getJob } from "@/server/services/job.service";
@@ -35,7 +38,7 @@ export default async function JobDetailPage({
   if (!session?.user) {
     redirect("/login");
   }
-  const user = session.user;
+  const user = getStaffUser(session);
   const { jobId } = await params;
 
   const job = await getJob(db, user, jobId).catch((error) => {
@@ -89,10 +92,15 @@ export default async function JobDetailPage({
             </Badge>
           </div>
           <p className="text-muted-foreground text-sm">
-            <Link href={`/clients/${job.client.id}`} className="hover:underline">
-              {job.client.name}
-            </Link>{" "}
-            · {EMPLOYMENT_TYPE_LABELS[job.employmentType]} ·{" "}
+            {job.client ? (
+              <Link href={`/clients/${job.client.id}`} className="hover:underline">
+                {job.client.name}
+              </Link>
+            ) : (
+              IN_HOUSE_CLIENT_LABEL
+            )}{" "}
+            · {WORK_MODE_LABELS[job.workMode]} ·{" "}
+            {EMPLOYMENT_TYPE_LABELS[job.employmentType]} ·{" "}
             {job.openings} opening{job.openings === 1 ? "" : "s"}
           </p>
         </div>
@@ -107,9 +115,12 @@ export default async function JobDetailPage({
                 department: job.department,
                 location: job.location,
                 employmentType: job.employmentType,
+                workMode: job.workMode,
                 status: job.status,
                 openings: job.openings,
+                jobRole: job.jobRole,
                 description: job.description,
+                requirements: job.requirements,
               }}
             />
           </div>
@@ -123,7 +134,12 @@ export default async function JobDetailPage({
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             <DetailRow label="Department" value={job.department ?? "—"} />
+            <DetailRow label="Job role" value={job.jobRole ?? "—"} />
             <DetailRow label="Location" value={job.location ?? "—"} />
+            <DetailRow
+              label="Work mode"
+              value={WORK_MODE_LABELS[job.workMode]}
+            />
             <DetailRow
               label="Owner"
               value={job.owner.name ?? job.owner.email}
@@ -152,6 +168,14 @@ export default async function JobDetailPage({
                   Description
                 </p>
                 <p className="whitespace-pre-wrap">{job.description}</p>
+              </div>
+            ) : null}
+            {job.requirements ? (
+              <div className="pt-2">
+                <p className="text-muted-foreground mb-1 text-xs font-medium uppercase">
+                  Requirements
+                </p>
+                <p className="whitespace-pre-wrap">{job.requirements}</p>
               </div>
             ) : null}
           </CardContent>

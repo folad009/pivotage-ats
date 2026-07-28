@@ -12,7 +12,7 @@ import {
 } from "@/server/services/reporting.service";
 import { createTRPCRouter, protectedProcedure } from "@/server/trpc/trpc";
 
-function assertReportAccess(user: { id: string; role: import("@prisma/client").Role }) {
+function assertReportAccess(user: { id: string; role: import("@/lib/prisma").Role }) {
   if (!mayViewReports(user)) {
     throw new TRPCError({ code: "FORBIDDEN" });
   }

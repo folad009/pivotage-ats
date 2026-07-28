@@ -1,4 +1,4 @@
-import { Recommendation } from "@prisma/client";
+import { Recommendation } from "@/lib/prisma-browser";
 import { z } from "zod";
 
 export const scorecardCriteriaSchema = z.record(

@@ -1,6 +1,6 @@
 "use client";
 
-import { Role } from "@prisma/client";
+import { Role } from "@/lib/prisma-browser";
 import { Pencil, Plus, Users } from "lucide-react";
 import { useState } from "react";
 

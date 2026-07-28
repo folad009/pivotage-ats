@@ -4,7 +4,7 @@ import {
   NoteType,
   type Prisma,
   type PrismaClient,
-} from "@prisma/client";
+} from "@/lib/prisma";
 
 import { ForbiddenError, NotFoundError } from "@/lib/errors";
 import {

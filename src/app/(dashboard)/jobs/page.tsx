@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 
 import { JobsView } from "@/components/jobs/jobs-view";
 import { can } from "@/lib/rbac";
+import { getStaffUser } from "@/lib/staff-session";
 import { auth } from "@/server/auth";
 
 export default async function JobsPage() {
@@ -10,7 +11,7 @@ export default async function JobsPage() {
     redirect("/login");
   }
 
-  const user = session.user;
+  const user = getStaffUser(session);
 
   return (
     <div className="space-y-6">

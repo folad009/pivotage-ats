@@ -1,4 +1,4 @@
-import type { StageType } from "@prisma/client";
+import type { StageType } from "@/lib/prisma-browser";
 
 /** Canonical stage order for cross-job funnel and conversion metrics. */
 export const FUNNEL_STAGE_TYPES: StageType[] = [

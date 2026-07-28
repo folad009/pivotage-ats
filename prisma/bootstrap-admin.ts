@@ -1,6 +1,7 @@
-import { PrismaClient, Role } from "../src/generated/prisma";
+import { Role } from "@/lib/prisma-browser";
 import argon2 from "argon2";
 
+import { createPrismaClient } from "@/lib/create-prisma-client";
 import { parseBootstrapAdminEnv } from "@/lib/validations/bootstrap";
 
 /**
@@ -29,7 +30,7 @@ function readBootstrapInput() {
 
 async function main() {
   const input = readBootstrapInput();
-  const prisma = new PrismaClient();
+  const prisma = createPrismaClient();
 
   try {
     const existingAdmin = await prisma.user.findFirst({

@@ -1,4 +1,4 @@
-import type { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@/lib/prisma";
 import { describe, expect, it, vi } from "vitest";
 
 import { ValidationError } from "@/lib/errors";
@@ -158,9 +158,12 @@ describe("createJob", () => {
       department: undefined,
       location: undefined,
       employmentType: "FULL_TIME",
+      workMode: "REMOTE",
       status: "DRAFT",
       openings: 1,
+      jobRole: undefined,
       description: undefined,
+      requirements: undefined,
     });
 
     expect(create).toHaveBeenCalledTimes(1);

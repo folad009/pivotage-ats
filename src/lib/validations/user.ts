@@ -1,4 +1,4 @@
-import { Role } from "@prisma/client";
+import { Role } from "@/lib/prisma-browser";
 import { z } from "zod";
 
 export const ROLES = Object.values(Role);

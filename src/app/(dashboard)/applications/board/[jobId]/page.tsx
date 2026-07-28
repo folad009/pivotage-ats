@@ -6,6 +6,7 @@ import { ApplicationKanban } from "@/components/applications/application-kanban"
 import { Button } from "@/components/ui/button";
 import { NotFoundError } from "@/lib/errors";
 import { can, mayBrowseCandidatePII, mayMoveApplication } from "@/lib/rbac";
+import { getStaffUser } from "@/lib/staff-session";
 import { auth } from "@/server/auth";
 import { db } from "@/server/db";
 import { getBoardData } from "@/server/services/application.service";
@@ -19,11 +20,11 @@ export default async function ApplicationBoardPage({
   if (!session?.user) {
     redirect("/login");
   }
-  if (!mayBrowseCandidatePII(session.user)) {
+  if (!mayBrowseCandidatePII(getStaffUser(session))) {
     redirect("/dashboard");
   }
 
-  const user = session.user;
+  const user = getStaffUser(session);
   const { jobId } = await params;
 
   try {

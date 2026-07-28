@@ -1,4 +1,4 @@
-import type { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@/lib/prisma";
 import { describe, expect, it, vi } from "vitest";
 
 import { ForbiddenError, ValidationError } from "@/lib/errors";

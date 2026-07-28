@@ -1,6 +1,6 @@
 "use client";
 
-import { JobStatus } from "@prisma/client";
+import { JobStatus } from "@/lib/prisma-browser";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";

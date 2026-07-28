@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { useForm } from "react-hook-form";
@@ -114,6 +115,20 @@ export function LoginForm() {
             </Button>
           </form>
         </Form>
+        <div className="text-muted-foreground mt-4 space-y-2 text-center text-sm">
+          <p>
+            Looking for a role?{" "}
+            <Link href="/careers" className="text-primary font-medium hover:underline">
+              Browse open positions
+            </Link>
+          </p>
+          <p>
+            New candidate?{" "}
+            <Link href="/register" className="text-primary font-medium hover:underline">
+              Create an account
+            </Link>
+          </p>
+        </div>
       </CardContent>
     </Card>
   );

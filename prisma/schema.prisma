@@ -2,14 +2,12 @@
 // See AGENTS.md §5 (Domain Model) and §9 (Prisma conventions).
 
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
   output   = "../src/generated/prisma"
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
 }
 
 // ---------------------------------------------------------------------------
@@ -42,6 +40,12 @@ enum EmploymentType {
   CONTRACT
   TEMPORARY
   INTERNSHIP
+}
+
+enum WorkMode {
+  REMOTE
+  HYBRID
+  ONSITE
 }
 
 enum StageType {
@@ -187,19 +191,22 @@ model Client {
 model Job {
   id             String         @id @default(cuid())
   title          String
-  clientId       String
+  clientId       String?
   ownerId        String
   department     String?
   location       String?
   employmentType EmploymentType @default(FULL_TIME)
+  workMode       WorkMode       @default(REMOTE)
   status         JobStatus      @default(DRAFT)
   openings       Int            @default(1)
+  jobRole        String?
   description    String?
+  requirements   String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  client       Client          @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  client       Client?         @relation(fields: [clientId], references: [id], onDelete: SetNull)
   owner        User            @relation("JobOwner", fields: [ownerId], references: [id])
   stages       PipelineStage[]
   applications Application[]
@@ -207,6 +214,7 @@ model Job {
   @@index([clientId])
   @@index([ownerId])
   @@index([status])
+  @@index([workMode])
 }
 
 model PipelineStage {
@@ -230,14 +238,15 @@ model PipelineStage {
 }
 
 model Candidate {
-  id          String  @id @default(cuid())
-  firstName   String
-  lastName    String
-  email       String  @unique
-  phone       String?
-  location    String?
-  source      String?
-  linkedinUrl String?
+  id           String  @id @default(cuid())
+  firstName    String
+  lastName     String
+  email        String  @unique
+  passwordHash String?
+  phone        String?
+  location     String?
+  source       String?
+  linkedinUrl  String?
   anonymizedAt DateTime?
 
   createdAt DateTime @default(now())

@@ -1,10 +1,10 @@
 // @vitest-environment node
-import { PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { moveStage } from "@/server/services/application.service";
+import { getTestDb } from "../helpers/test-db";
 
-const db = new PrismaClient();
+const db = getTestDb();
 const hasDatabase = Boolean(process.env.DATABASE_URL);
 
 describe.skipIf(!hasDatabase)("moveStage integration", () => {

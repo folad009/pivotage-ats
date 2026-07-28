@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Role } from "@prisma/client";
+import type { Role } from "@/lib/prisma";
 
 import { can, type AccessUser, type Action, type ResourceScope } from "@/lib/rbac";
 

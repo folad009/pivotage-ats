@@ -4,6 +4,7 @@ import { CandidatesView } from "@/components/candidates/candidates-view";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ShieldAlert } from "lucide-react";
 import { can, mayBrowseCandidatePII } from "@/lib/rbac";
+import { getStaffUser } from "@/lib/staff-session";
 import { auth } from "@/server/auth";
 
 export default async function CandidatesPage() {
@@ -12,7 +13,9 @@ export default async function CandidatesPage() {
     redirect("/login");
   }
 
-  if (!mayBrowseCandidatePII(session.user)) {
+  const user = getStaffUser(session);
+
+  if (!mayBrowseCandidatePII(user)) {
     return (
       <EmptyState
         icon={ShieldAlert}
@@ -30,7 +33,7 @@ export default async function CandidatesPage() {
           Talent pool and candidate profiles.
         </p>
       </header>
-      <CandidatesView canManage={can(session.user, "candidate:manage")} />
+      <CandidatesView canManage={can(user, "candidate:manage")} />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { ApplicationStatus } from "@prisma/client";
+import { ApplicationStatus } from "@/lib/prisma-browser";
 import { z } from "zod";
 
 export const createApplicationSchema = z.object({

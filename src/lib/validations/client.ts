@@ -1,4 +1,4 @@
-import { ClientStatus } from "@prisma/client";
+import { ClientStatus } from "@/lib/prisma-browser";
 import { z } from "zod";
 
 export const CLIENT_STATUSES = Object.values(ClientStatus);

@@ -1,4 +1,4 @@
-import type { Role } from "@prisma/client";
+import type { Role } from "@/lib/prisma-browser";
 
 /**
  * Pure RBAC matrix — safe to import from Client Components (no server deps).

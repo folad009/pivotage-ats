@@ -1,4 +1,4 @@
-import { ApplicationStatus } from "@prisma/client";
+import { ApplicationStatus } from "@/lib/prisma";
 import { describe, expect, it } from "vitest";
 
 import { ForbiddenError, ValidationError } from "@/lib/errors";
