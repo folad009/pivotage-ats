@@ -1,3 +1,5 @@
+import "dotenv/config";
+
 import argon2 from "argon2";
 
 import { createPrismaClient } from "../src/lib/create-prisma-client";

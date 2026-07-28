@@ -1,3 +1,5 @@
+import "dotenv/config";
+
 import { Role } from "@/lib/prisma-browser";
 import argon2 from "argon2";
 
